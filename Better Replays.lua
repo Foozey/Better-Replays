@@ -184,7 +184,7 @@ function on_event(event)
         move_file()
         play_sound()
 
-        -- If the user didn't manually stop it, estart the replay buffer
+        -- If the user didn't manually stop it, restart the replay buffer
         if obs.obs_frontend_replay_buffer_active() or script_started_replay then
             restart_replay_buffer()
         end
