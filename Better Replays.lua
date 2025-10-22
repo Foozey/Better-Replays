@@ -101,29 +101,25 @@ local function get_title()
         return nil, nil
     end
 
-    -- Set the buffer and get the length of the window title
+    -- Set the title to the window title
     local buffer = ffi.new("char[256]")
     local length = user32.GetWindowTextA(window, buffer, 256)
+    local title = ffi.string(buffer, length)
 
-    -- Return the title as a string and the window
-    return ffi.string(buffer, length), window
-end
-
--- Maps specific titles to simplified versions
-local function get_known_title(title)
-    -- Add known cases here:
+    -- Known title cases that need to be modified
     local known_titles = {
         ["Minecraft"] = "Minecraft",
         ["osu!"] = "osu!"
     }
 
+    -- Map known titles to simplified versions
     for key, name in pairs(known_titles) do
         if title:lower():find(key:lower()) then
-            return name
+            return name, window
         end
     end
 
-    return title
+    return title, window
 end
 
 -- Gets the OBS recordings folder
@@ -137,26 +133,15 @@ end
 
 -- Finds the latest replay file in the recordings folder
 local function get_replay(folder)
-    local latest_file = nil
     local valid_extensions = { ".mp4", ".mov", ".mkv", ".flv" }
 
-    -- List files in the given folder from newest to oldest
-    local dir = io.popen('dir "' .. folder .. '" /b /a-d /o-d')
-
-    -- Get the most recent file with a valid extension
-    for file in dir:lines() do
+    for file in io.popen('dir "'..folder..'" /b /a-d /o-d'):lines() do
         for _, ext in ipairs(valid_extensions) do
-            if file:lower():match(ext .. "$") then
-                latest_file = file
-                break
+            if file:lower():match(ext.."$") then
+                return folder .. "\\" .. file
             end
         end
     end
-
-    dir:close()
-
-    -- Return the full file path
-    return folder .. "\\" .. latest_file
 end
 
 -- Moves the replay file to a folder matching the active fullscreen window
@@ -164,7 +149,7 @@ local function move_file()
     local title, window = get_title()
 
     -- Sets the folder name to the window title, or defaults to "Desktop"
-    local folder_name = (title and is_fullscreen(window)) and get_known_title(title) or "Desktop"
+    local folder_name = (title and is_fullscreen(window)) and title or "Desktop"
     folder_name = folder_name:gsub("[<>:\"/\\|?*]", "")
 
     -- Get the recordings path, the latest replay file, and the destination folder
