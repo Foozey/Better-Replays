@@ -8,5 +8,5 @@ An OBS Lua script to improve replays.
 
 ## Installation
 1. Download the latest version of Better Replays from the [releases](https://github.com/foozey/better-replays/releases)
-2. Create a folder somewhere on your PC and extract the `Better Replays.zip` file you downloaded
-3. In OBS, go to `Tools > Scripts`, click the `+`, and locate `BetterReplays.lua` from the folder you created
+2. Create a folder somewhere on your PC and extract the `Better-Replays.zip` file you downloaded
+3. In OBS, go to `Tools > Scripts`, click the `+`, and locate `Better Replays.lua` from the folder you created
