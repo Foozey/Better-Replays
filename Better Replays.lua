@@ -10,10 +10,9 @@ local obs = obslua
 local ffi = require("ffi")
 local winmm = ffi.load("Winmm")
 local user32 = ffi.load("user32")
+local is_restarting = false
 
 ffi.cdef[[
-    bool PlaySound(const char *pszSound, void *hmod, uint32_t fdwSound);
-    
     typedef void* HWND;
     typedef int BOOL;
     typedef struct { long left; long top; long right; long bottom; } RECT;
@@ -23,24 +22,8 @@ ffi.cdef[[
     BOOL GetMonitorInfoA(void *hMonitor, void *lpmi);
     HWND GetForegroundWindow(void);
     int GetWindowTextA(HWND hWnd, char *lpString, int nMaxCount);
+    bool PlaySound(const char *pszSound, void *hmod, uint32_t fdwSound);
 ]]
-
--- Plays a notification sound effect
-local function play_sound()
-    winmm.PlaySound(script_path() .. "Replay Sound.wav", nil, 0x00020000)
-end
-
--- Restarts the replay buffer
-local function restart_replay_buffer()
-    -- Stop the replay buffer
-    obs.obs_frontend_replay_buffer_stop()
-
-    -- Start the replay buffer after a 300ms delay
-    obs.timer_add(function()
-        obs.obs_frontend_replay_buffer_start()
-        obs.timer_remove()
-    end, 300)
-end
 
 -- Checks if the window is fullscreen or borderless
 local function is_fullscreen(window)
@@ -154,8 +137,34 @@ local function move_file()
     os.execute('move "' .. file .. '" "' .. folder .. '"')
 end
 
--- Runs when a replay is saved
+-- Plays a notification sound effect
+local function play_sound()
+    winmm.PlaySound(script_path() .. "Replay Sound.wav", nil, 0x00020000)
+end
+
+-- Restarts the replay buffer
+local function restart_replay_buffer()
+    if obs.obs_frontend_replay_buffer_active() then
+        is_restarting = true
+        obs.obs_frontend_replay_buffer_stop()
+    else
+        obs.obs_frontend_replay_buffer_start()
+    end
+end
+
+-- Runs code during replay events
 function on_event(event)
+    -- When the replay buffer is restarting automatically
+    if is_restarting then
+        if event == obs.OBS_FRONTEND_EVENT_REPLAY_BUFFER_STOPPED then
+            obs.timer_add(obs.obs_frontend_replay_buffer_start, 1)
+        elseif event == obs.OBS_FRONTEND_EVENT_REPLAY_BUFFER_STARTING then
+            obs.timer_remove(obs.obs_frontend_replay_buffer_start)
+            is_restarting = false
+        end
+    end
+
+    -- When a replay is saved
     if event == obs.OBS_FRONTEND_EVENT_REPLAY_BUFFER_SAVED then
         move_file()
         play_sound()
