@@ -10,7 +10,6 @@ local obs = obslua
 local ffi = require("ffi")
 local winmm = ffi.load("Winmm")
 local user32 = ffi.load("user32")
-local replay_buffer_restarting = false
 
 ffi.cdef[[
     bool PlaySound(const char *pszSound, void *hmod, uint32_t fdwSound);
@@ -33,22 +32,14 @@ end
 
 -- Restarts the replay buffer
 local function restart_replay_buffer()
-    -- Only restart when the replay buffer is active
-    if not obs.obs_frontend_replay_buffer_active() then
-        return
-    end
-
-    replay_buffer_restarting = true
-
     -- Stop the replay buffer
     obs.obs_frontend_replay_buffer_stop()
 
-    -- Start the replay buffer after a 500ms delay
+    -- Start the replay buffer after a 300ms delay
     obs.timer_add(function()
         obs.obs_frontend_replay_buffer_start()
-        replay_buffer_restarting = false
         obs.timer_remove()
-    end, 500)
+    end, 300)
 end
 
 -- Checks if the window is fullscreen or borderless
@@ -168,11 +159,7 @@ function on_event(event)
     if event == obs.OBS_FRONTEND_EVENT_REPLAY_BUFFER_SAVED then
         move_file()
         play_sound()
-
-        -- If the user didn't manually stop it, restart the replay buffer
-        if obs.obs_frontend_replay_buffer_active() or script_started_replay then
-            restart_replay_buffer()
-        end
+        restart_replay_buffer()
     end
 end
 
