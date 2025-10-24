@@ -83,10 +83,15 @@ local function get_title()
     -- Known title cases that need to be modified
     local known_titles = {
         ["Minecraft"] = "Minecraft",
-        ["osu!"] = "osu!"
+        ["osu!"] = "osu!",
+
+        -- Force desktop folder with commonly fullscreen apps
+        ["Google Chrome"] = "Desktop",
+        ["Stremio"] = "Desktop",
+        ["VLC"] = "Desktop"
     }
 
-    -- Map known titles to simplified versions
+    -- Map known titles to corrected versions
     for key, name in pairs(known_titles) do
         if title:lower():find(key:lower()) then
             return name, window
