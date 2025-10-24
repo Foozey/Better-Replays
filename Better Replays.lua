@@ -86,8 +86,8 @@ local function get_title()
         ["osu!"] = "osu!",
 
         -- Force desktop folder with commonly fullscreen apps
-        ["Discord"] = "Discord",
         ["Google Chrome"] = "Desktop",
+        ["Discord"] = "Discord",
         ["Stremio"] = "Desktop",
         ["VLC"] = "Desktop"
     }
