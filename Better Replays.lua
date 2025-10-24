@@ -142,9 +142,19 @@ local function move_file()
     os.execute('move "' .. file .. '" "' .. folder .. '"')
 end
 
--- Plays a notification sound effect
-local function play_sound()
-    winmm.PlaySound(script_path() .. "Replay Sound.wav", nil, 0x00020000)
+-- Plays a replay saved notification sound effect
+local function play_replay_saved_sound()
+    winmm.PlaySound(script_path() .. "Replay Saved.wav", nil, 0x00020000)
+end
+
+-- Plays a notification sound effect when a recording is started
+local function play_recording_started_sound()
+    winmm.PlaySound(script_path() .. "Recording Started.wav", nil, 0x00020000)
+end
+
+-- Plays a notification sound effect when a recording is stopped
+local function play_recording_stopped_sound()
+    winmm.PlaySound(script_path() .. "Recording Stopped.wav", nil, 0x00020000)
 end
 
 -- Restarts the replay buffer
@@ -163,7 +173,7 @@ function on_event(event)
     if is_restarting then
         if event == obs.OBS_FRONTEND_EVENT_REPLAY_BUFFER_STOPPED then
             obs.timer_add(obs.obs_frontend_replay_buffer_start, 1)
-        elseif event == obs.OBS_FRONTEND_EVENT_REPLAY_BUFFER_STARTING then
+        elseif event == obs.OBS_FRONTEND_EVENT_REPLAY_BUFFER_STARTED then
             obs.timer_remove(obs.obs_frontend_replay_buffer_start)
             is_restarting = false
         end
@@ -172,8 +182,18 @@ function on_event(event)
     -- When a replay is saved
     if event == obs.OBS_FRONTEND_EVENT_REPLAY_BUFFER_SAVED then
         move_file()
-        play_sound()
+        play_replay_saved_sound()
         restart_replay_buffer()
+    end
+
+    -- When a recording is started
+    if event == obs.OBS_FRONTEND_EVENT_RECORDING_STARTED then
+        play_recording_started_sound()
+    end
+
+    -- When a recording is stopped
+    if event == obs.OBS_FRONTEND_EVENT_RECORDING_STOPPED then
+        play_recording_stopped_sound()
     end
 end
 
