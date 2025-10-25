@@ -61,7 +61,7 @@ local function is_fullscreen(window)
     local m = ffi.cast("long*", monitor_info + 4)
     local monitor_width, monitor_height = m[2] - m[0], m[3] - m[1]
 
-    -- Compare the window size with the monitor size to determine if the window is fullscreen
+    -- Compare the window size with the monitor size to determine fullscreen
     return math.abs(window_width - monitor_width) <= 3 and
         math.abs(window_height - monitor_height) <= 3
 end
@@ -87,7 +87,7 @@ local function get_title()
 
         -- Force desktop folder with commonly fullscreen apps
         ["Google Chrome"] = "Desktop",
-        ["Discord"] = "Discord",
+        ["Discord"] = "Desktop",
         ["Stremio"] = "Desktop",
         ["VLC"] = "Desktop"
     }
@@ -102,60 +102,44 @@ local function get_title()
     return title, window
 end
 
--- Gets the OBS recordings folder
+-- Gets the latest replay file
+local function get_file()
+    local output = obs.obs_frontend_get_replay_buffer_output()
+    local call_data = obs.calldata_create()
+    local proc_handler = obs.obs_output_get_proc_handler(output)
+
+    -- Get the last replay's path
+    obs.proc_handler_call(proc_handler, "get_last_replay", call_data)
+    local file = obs.calldata_string(call_data, "path")
+
+    -- Clean up objects
+    obs.calldata_destroy(call_data)
+    obs.obs_output_release(output)
+
+    return file
+end
+
+-- Gets the destination folder
 local function get_folder()
-    local config = obs.obs_frontend_get_profile_config()
-
-    -- Return either the simple or advanced path
-    return obs.config_get_string(config, "SimpleOutput", "FilePath") or
-        obs.config_get_string(config, "AdvOut", "RecFilePath")
-end
-
--- Finds the latest replay file in the recordings folder
-local function get_replay(folder)
-    local valid_extensions = { ".mp4", ".mov", ".mkv", ".flv" }
-
-    for file in io.popen('dir "'..folder..'" /b /a-d /o-d'):lines() do
-        for _, ext in ipairs(valid_extensions) do
-            if file:lower():match(ext.."$") then
-                return folder .. "\\" .. file
-            end
-        end
-    end
-end
-
--- Moves the replay file to a folder matching the active fullscreen window
-local function move_file()
     local title, window = get_title()
+    local folder = (title and is_fullscreen(window)) and title or "Desktop"
 
-    -- Sets the folder name to the window title, or defaults to "Desktop"
-    local folder_name = (title and is_fullscreen(window)) and title or "Desktop"
-    folder_name = folder_name:gsub("[<>:\"/\\|?*]", "")
-
-    -- Get the recordings path, the latest replay file, and the destination folder
-    local path = get_folder()
-    local file = get_replay(path)
-    local folder = path .. "\\Replays\\" .. folder_name
-
-    -- Make the destination folder and move the replay file to it
-    os.execute('mkdir "' .. path .. '\\Replays"')
-    os.execute('mkdir "' .. folder .. '"')
-    os.execute('move "' .. file .. '" "' .. folder .. '"')
+    return folder:gsub("[<>:\"/\\|?*]", "")
 end
 
--- Plays a replay saved notification sound effect
-local function play_replay_saved_sound()
-    winmm.PlaySound(script_path() .. "Replay Saved.wav", nil, 0x00020000)
+-- Moves the latest replay file to the destination folder
+local function move_file(file, folder)
+    local separator = file:match("^.*()/")
+    local root = file:sub(1, separator) .. "Replays/" .. folder
+
+    -- Make the directory if needed and move the file
+    obs.os_mkdir(root)
+    obs.os_rename(file, root .. "/" .. file:sub(separator + 1))
 end
 
--- Plays a notification sound effect when a recording is started
-local function play_recording_started_sound()
-    winmm.PlaySound(script_path() .. "Recording Started.wav", nil, 0x00020000)
-end
-
--- Plays a notification sound effect when a recording is stopped
-local function play_recording_stopped_sound()
-    winmm.PlaySound(script_path() .. "Recording Stopped.wav", nil, 0x00020000)
+-- Plays a notification sound
+local function play_sound(file)
+    winmm.PlaySound(script_path() .. file, nil, 0x00020000)
 end
 
 -- Restarts the replay buffer
@@ -170,7 +154,7 @@ end
 
 -- Runs code during replay events
 function on_event(event)
-    -- When the replay buffer is restarting automatically
+    -- When the replay buffer is restarting
     if is_restarting then
         if event == obs.OBS_FRONTEND_EVENT_REPLAY_BUFFER_STOPPED then
             obs.timer_add(obs.obs_frontend_replay_buffer_start, 1)
@@ -182,19 +166,19 @@ function on_event(event)
 
     -- When a replay is saved
     if event == obs.OBS_FRONTEND_EVENT_REPLAY_BUFFER_SAVED then
-        move_file()
-        play_replay_saved_sound()
+        move_file(get_file(), get_folder())
+        play_sound("Replay Saved.wav")
         restart_replay_buffer()
     end
 
     -- When a recording is started
     if event == obs.OBS_FRONTEND_EVENT_RECORDING_STARTED then
-        play_recording_started_sound()
+        play_sound("Recording Started.wav")
     end
 
     -- When a recording is stopped
     if event == obs.OBS_FRONTEND_EVENT_RECORDING_STOPPED then
-        play_recording_stopped_sound()
+        play_sound("Recording Stopped.wav")
     end
 end
 
