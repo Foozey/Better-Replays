@@ -123,8 +123,7 @@ end
 local function get_folder()
     local title, window = get_title()
     local folder = (title and is_fullscreen(window)) and title or "Desktop"
-
-    return folder:gsub("[<>:\"/\\|?*]", "")
+    return folder:gsub("[^%w %-_.!]", "")
 end
 
 -- Moves the latest replay file to the destination folder
