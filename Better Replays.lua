@@ -5,24 +5,37 @@
 -- Version: 1.0.0
 -- License: MIT
 ----------------------------------------------------------------------------------------------------
+-- Known title cases that need to be modified
+local known_titles = {
+    -- Simplify complex titles (e.g., "Minecraft 1.21.10" -> "Minecraft")
+    ["Minecraft"] = "Minecraft",
+    ["osu!"] = "osu!",
+
+    -- Force desktop folder with commonly fullscreen apps
+    ["Google Chrome"] = "Desktop",
+    ["Discord"] = "Desktop",
+    ["Stremio"] = "Desktop",
+    ["VLC"] = "Desktop"
+}
+----------------------------------------------------------------------------------------------------
 
 local obs = obslua
 local ffi = require("ffi")
 local winmm = ffi.load("Winmm")
 local user32 = ffi.load("user32")
-local is_restarting = false
+local restarting = false
 
 ffi.cdef[[
     typedef void* HWND;
     typedef int BOOL;
-    typedef struct { long left; long top; long right; long bottom; } RECT;
-    
+    typedef struct { long left, top, right, bottom; } RECT;
+
     BOOL GetWindowRect(HWND hWnd, RECT *lpRect);
-    HWND MonitorFromWindow(HWND window, uint32_t dwFlags);
+    HWND MonitorFromWindow(HWND hWnd, uint32_t dwFlags);
     BOOL GetMonitorInfoA(void *hMonitor, void *lpmi);
     HWND GetForegroundWindow(void);
     int GetWindowTextA(HWND hWnd, char *lpString, int nMaxCount);
-    bool PlaySound(const char *pszSound, void *hmod, uint32_t fdwSound);
+    int PlaySound(const char *pszSound, void *hmod, uint32_t fdwSound);
 ]]
 
 -- Checks if the window is fullscreen or borderless
@@ -80,18 +93,6 @@ local function get_title()
     local length = user32.GetWindowTextA(window, buffer, 256)
     local title = ffi.string(buffer, length)
 
-    -- Known title cases that need to be modified
-    local known_titles = {
-        ["Minecraft"] = "Minecraft",
-        ["osu!"] = "osu!",
-
-        -- Force desktop folder with commonly fullscreen apps
-        ["Google Chrome"] = "Desktop",
-        ["Discord"] = "Desktop",
-        ["Stremio"] = "Desktop",
-        ["VLC"] = "Desktop"
-    }
-
     -- Map known titles to corrected versions
     for key, name in pairs(known_titles) do
         if title:lower():find(key:lower()) then
@@ -144,22 +145,22 @@ end
 -- Restarts the replay buffer
 local function restart_replay_buffer()
     if obs.obs_frontend_replay_buffer_active() then
-        is_restarting = true
+        restarting = true
         obs.obs_frontend_replay_buffer_stop()
     else
         obs.obs_frontend_replay_buffer_start()
     end
 end
 
--- Runs code during replay events
+-- Runs code during events
 function on_event(event)
     -- When the replay buffer is restarting
-    if is_restarting then
+    if restarting then
         if event == obs.OBS_FRONTEND_EVENT_REPLAY_BUFFER_STOPPED then
             obs.timer_add(obs.obs_frontend_replay_buffer_start, 1)
         elseif event == obs.OBS_FRONTEND_EVENT_REPLAY_BUFFER_STARTED then
             obs.timer_remove(obs.obs_frontend_replay_buffer_start)
-            is_restarting = false
+            restarting = false
         end
     end
 
@@ -170,13 +171,10 @@ function on_event(event)
         restart_replay_buffer()
     end
 
-    -- When a recording is started
+    -- When a recording is started/stopped
     if event == obs.OBS_FRONTEND_EVENT_RECORDING_STARTED then
         play_sound("Recording Started.wav")
-    end
-
-    -- When a recording is stopped
-    if event == obs.OBS_FRONTEND_EVENT_RECORDING_STOPPED then
+    elseif event == obs.OBS_FRONTEND_EVENT_RECORDING_STOPPED then
         play_sound("Recording Stopped.wav")
     end
 end
