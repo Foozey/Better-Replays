@@ -9,6 +9,7 @@
 local known_titles = {
     -- Simplify complex titles (e.g., "Minecraft 1.21.10" -> "Minecraft")
     ["Minecraft"] = "Minecraft",
+    ["Rocket League"] = "Rocket League",
     ["osu!"] = "osu!",
 
     -- Force desktop folder with commonly fullscreen apps
