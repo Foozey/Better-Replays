@@ -2,7 +2,8 @@
 An OBS Lua script to improve replays.
 
 ## Features
-- Saves replays to subfolders based on the game being played, or a "Desktop" folder
+- Saves replays and recordings to subfolders based on the game being played
+  - For example, `..\OBS\Replays\ARC Raiders` or `..\OBS\Recordings\Desktop`
 - Plays a sound notification when a replay is saved or a recording is started/stopped
 - Restarts the replay buffer when a replay is saved (this prevents overlapped replays)
 

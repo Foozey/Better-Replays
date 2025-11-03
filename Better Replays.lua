@@ -31,13 +31,18 @@ ffi.cdef[[
     typedef int BOOL;
     typedef struct { long left, top, right, bottom; } RECT;
 
+    int PlaySound(const char *pszSound, void *hmod, uint32_t fdwSound);
     BOOL GetWindowRect(HWND hWnd, RECT *lpRect);
     HWND MonitorFromWindow(HWND hWnd, uint32_t dwFlags);
     BOOL GetMonitorInfoA(void *hMonitor, void *lpmi);
     HWND GetForegroundWindow(void);
     int GetWindowTextA(HWND hWnd, char *lpString, int nMaxCount);
-    int PlaySound(const char *pszSound, void *hmod, uint32_t fdwSound);
 ]]
+
+-- Plays a notification sound
+local function play_sound(file)
+    winmm.PlaySound(script_path() .. file, nil, 0x00020000)
+end
 
 -- Checks if the window is fullscreen or borderless
 local function is_fullscreen(window)
@@ -105,7 +110,7 @@ local function get_title()
 end
 
 -- Gets the latest replay file
-local function get_file()
+local function get_replay()
     local output = obs.obs_frontend_get_replay_buffer_output()
     local call_data = obs.calldata_create()
     local proc_handler = obs.obs_output_get_proc_handler(output)
@@ -121,6 +126,18 @@ local function get_file()
     return file
 end
 
+-- Gets the latest recording file
+local function get_recording()
+    local output = obs.obs_frontend_get_recording_output()
+    local settings = obs.obs_output_get_settings(output)
+    local file = obs.obs_data_get_string(settings, "path")
+
+    -- Clean up objects
+    obs.obs_data_release(settings)
+
+    return file
+end
+
 -- Gets the destination folder
 local function get_folder()
     local title, window = get_title()
@@ -128,19 +145,14 @@ local function get_folder()
     return folder:gsub("[^%w %-_.!]", "")
 end
 
--- Moves the latest replay file to the destination folder
-local function move_file(file, folder)
+-- Moves the latest file to the destination folder
+local function move_file(file, folder, parent)
     local separator = file:match("^.*()/")
-    local root = file:sub(1, separator) .. "Replays/" .. folder
+    local root = file:sub(1, separator) .. parent .. folder
 
     -- Make the directory if needed and move the file
     obs.os_mkdir(root)
     obs.os_rename(file, root .. "/" .. file:sub(separator + 1))
-end
-
--- Plays a notification sound
-local function play_sound(file)
-    winmm.PlaySound(script_path() .. file, nil, 0x00020000)
 end
 
 -- Restarts the replay buffer
@@ -167,8 +179,8 @@ function on_event(event)
 
     -- When a replay is saved
     if event == obs.OBS_FRONTEND_EVENT_REPLAY_BUFFER_SAVED then
-        move_file(get_file(), get_folder())
         play_sound("Replay Saved.wav")
+        move_file(get_replay(), get_folder(), "Replays/")
         restart_replay_buffer()
     end
 
@@ -177,6 +189,7 @@ function on_event(event)
         play_sound("Recording Started.wav")
     elseif event == obs.OBS_FRONTEND_EVENT_RECORDING_STOPPED then
         play_sound("Recording Stopped.wav")
+        move_file(get_recording(), get_folder(), "Recordings/")
     end
 end
 
