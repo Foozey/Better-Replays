@@ -12,10 +12,24 @@ local known_titles = {
     ["Rocket League"] = "Rocket League",
     ["osu!"] = "osu!",
 
-    -- Force desktop folder with commonly fullscreen apps
+    -- Force desktop folder with non-game apps
     ["Google Chrome"] = "Desktop",
-    ["Discord"] = "Desktop",
+    ["Spotify"] = "Desktop",
     ["Stremio"] = "Desktop",
+    ["Discord"] = "Desktop",
+    ["Steam"] = "Desktop",
+    ["OBS Studio"] = "Desktop",
+    ["DaVinci Resolve"] = "Desktop",
+    ["Affinity"] = "Desktop",
+    ["Figma"] = "Desktop",
+    ["Blender"] = "Desktop",
+    ["Unreal Engine"] = "Desktop",
+    ["Adobe Substance 3D Painter"] = "Desktop",
+    ["Ableton Live"] = "Desktop",
+    ["IntelliJ IDEA"] = "Desktop",
+    ["isaac-server"] = "Desktop",
+    ["FileZilla"] = "Desktop",
+    ["Prism Launcher"] = "Desktop",
     ["VLC"] = "Desktop"
 }
 ----------------------------------------------------------------------------------------------------
