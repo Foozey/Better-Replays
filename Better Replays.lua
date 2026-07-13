@@ -19,18 +19,24 @@ local known_titles = {
     ["Discord"] = "Desktop",
     ["Steam"] = "Desktop",
     ["OBS Studio"] = "Desktop",
-    ["DaVinci Resolve"] = "Desktop",
-    ["Affinity"] = "Desktop",
+    ["Adobe Photoshop"] = "Desktop",
+    ["Adobe Lightroom Classic"] = "Desktop",
+    ["Adobe Illustrator"] = "Desktop",
+    ["Adobe Premiere Pro"] = "Desktop",
+    ["Adobe After Effects"] = "Desktop",
+    ["Adobe Media Encoder"] = "Desktop",
+    ["Adobe Substance 3D Painter"] = "Desktop",
     ["Figma"] = "Desktop",
     ["Blender"] = "Desktop",
     ["Unreal Engine"] = "Desktop",
-    ["Adobe Substance 3D Painter"] = "Desktop",
     ["Ableton Live"] = "Desktop",
     ["IntelliJ IDEA"] = "Desktop",
     ["isaac-server"] = "Desktop",
     ["FileZilla"] = "Desktop",
     ["Prism Launcher"] = "Desktop",
-    ["VLC"] = "Desktop"
+    ["VLC"] = "Desktop",
+    ["DaVinci Resolve"] = "Desktop",
+    ["Affinity"] = "Desktop"
 }
 ----------------------------------------------------------------------------------------------------
 
