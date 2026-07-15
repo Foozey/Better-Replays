@@ -18,7 +18,6 @@ local known_titles = {
     ["Stremio"] = "Desktop",
     ["Discord"] = "Desktop",
     ["Steam"] = "Desktop",
-    ["OBS Studio"] = "Desktop",
     ["Adobe Photoshop"] = "Desktop",
     ["Adobe Lightroom Classic"] = "Desktop",
     ["Adobe Illustrator"] = "Desktop",
